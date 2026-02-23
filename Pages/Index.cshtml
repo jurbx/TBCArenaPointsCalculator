@@ -1,0 +1,84 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Arena Points Calculator";
+}
+
+<div class="calculator-wrapper">
+    <div class="calculator-card">
+        <div class="calculator-header">
+            <div class="header-icon">&#9876;</div>
+            <h1>Arena Points Calculator</h1>
+            <p class="subtitle">Burning Crusade Classic</p>
+        </div>
+
+        <form method="post">
+            <div class="form-section">
+                <label class="section-label">Arena Bracket</label>
+                <div class="bracket-grid">
+                    @foreach (var bracket in IndexModel.ArenaBrackets)
+                    {
+                        <label class="bracket-option @(Model.Bracket == bracket.Key ? "selected" : "")">
+                            <input type="radio"
+                                   name="Bracket"
+                                   value="@bracket.Key"
+                                   @(Model.Bracket == bracket.Key ? "checked" : "") />
+                            <div class="bracket-content">
+                                <span class="bracket-name">@bracket.Value.Label</span>
+                                <span class="bracket-modifier">×@bracket.Value.Modifier.ToString("F2")</span>
+                            </div>
+                        </label>
+                    }
+                </div>
+                <span asp-validation-for="Bracket" class="field-error"></span>
+            </div>
+
+            <div class="form-section">
+                <label class="section-label" for="Rating">Team Rating</label>
+                <div class="rating-input-wrapper">
+                    <input type="number"
+                           asp-for="Rating"
+                           class="rating-input"
+                           min="0"
+                           max="9999"
+                           placeholder="e.g. 1500" />
+                </div>
+                <span asp-validation-for="Rating" class="field-error"></span>
+            </div>
+
+            <button type="submit" class="calculate-btn">
+                Calculate Points
+            </button>
+        </form>
+
+        @if (Model.Result.HasValue)
+        {
+            <div class="result-panel">
+                <div class="result-label">Weekly Arena Points</div>
+                <div class="result-value">@Model.Result.Value.ToString("N0")</div>
+                <div class="result-details">
+                    @{
+                        var b = IndexModel.ArenaBrackets[Model.Bracket];
+                    }
+                    <span>@b.Label bracket</span>
+                    <span class="detail-separator">·</span>
+                    <span>@Model.Rating rating</span>
+                    <span class="detail-separator">·</span>
+                    <span>×@b.Modifier.ToString("F2") modifier</span>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll('.bracket-option input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                document.querySelectorAll('.bracket-option').forEach(opt => opt.classList.remove('selected'));
+                radio.closest('.bracket-option').classList.add('selected');
+            });
+        });
+    </script>
+}
