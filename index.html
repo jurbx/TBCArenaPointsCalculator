@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arena Points Calculator — Burning Crusade Classic</title>
+    <style>
+        :root {
+            --bg-primary: #0f1117;
+            --bg-card: #1a1d28;
+            --bg-input: #12141c;
+            --border: #2a2d3a;
+            --border-focus: #c9a44a;
+            --gold: #d4a843;
+            --gold-dim: #a07d2e;
+            --gold-glow: rgba(212, 168, 67, 0.15);
+            --text-primary: #e8e6e1;
+            --text-secondary: #8b8d97;
+            --text-muted: #5a5c66;
+            --accent: #4a90d9;
+            --danger: #e05555;
+            --success-bg: rgba(212, 168, 67, 0.08);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            min-height: 100%;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            margin: 0;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .calculator-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem 1rem;
+            min-height: calc(100vh - 60px);
+        }
+
+        .calculator-card {
+            width: 100%;
+            max-width: 460px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .calculator-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            filter: grayscale(0.2);
+        }
+
+        .calculator-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 0.25rem;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-weight: 500;
+        }
+
+        .form-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .section-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.625rem;
+        }
+
+        .bracket-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.625rem;
+        }
+
+        .bracket-option {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .bracket-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .bracket-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 1rem 0.5rem;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .bracket-option:hover .bracket-content {
+            border-color: var(--text-muted);
+        }
+
+        .bracket-option.selected .bracket-content {
+            border-color: var(--gold);
+            background: var(--gold-glow);
+            box-shadow: 0 0 16px rgba(212, 168, 67, 0.1);
+        }
+
+        .bracket-name {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .bracket-option.selected .bracket-name {
+            color: var(--gold);
+        }
+
+        .bracket-modifier {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .bracket-option.selected .bracket-modifier {
+            color: var(--gold-dim);
+        }
+
+        .rating-input-wrapper {
+            position: relative;
+        }
+
+        .rating-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            font-size: 1.05rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            background: var(--bg-input);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            font-variant-numeric: tabular-nums;
+            -moz-appearance: textfield;
+        }
+
+        .rating-input::-webkit-outer-spin-button,
+        .rating-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .rating-input::placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .rating-input:hover {
+            border-color: var(--text-muted);
+        }
+
+        .rating-input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.12);
+        }
+
+        .field-error {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--danger);
+            margin-top: 0.375rem;
+            min-height: 0;
+        }
+
+        .calculate-btn {
+            display: block;
+            width: 100%;
+            padding: 0.9rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #111;
+            background: linear-gradient(135deg, var(--gold), #e0b84e);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.02em;
+            margin-top: 0.5rem;
+        }
+
+        .calculate-btn:hover {
+            background: linear-gradient(135deg, #e0b84e, #d4a843);
+            box-shadow: 0 4px 20px rgba(212, 168, 67, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .calculate-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(212, 168, 67, 0.2);
+        }
+
+        .result-panel {
+            margin-top: 1.75rem;
+            padding: 1.5rem;
+            background: var(--success-bg);
+            border: 1px solid rgba(212, 168, 67, 0.2);
+            border-radius: 12px;
+            text-align: center;
+            animation: fadeIn 0.35s ease;
+        }
+
+        .result-panel.hidden {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--gold-dim);
+            margin-bottom: 0.375rem;
+        }
+
+        .result-value {
+            font-size: 2.75rem;
+            font-weight: 800;
+            color: var(--gold);
+            line-height: 1.1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .result-details {
+            margin-top: 0.75rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .detail-separator {
+            color: var(--text-muted);
+        }
+
+        .footer {
+            width: 100%;
+            line-height: 50px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        @media (max-width: 480px) {
+            .calculator-card {
+                padding: 1.75rem 1.25rem;
+                border-radius: 12px;
+            }
+
+            .calculator-header h1 {
+                font-size: 1.3rem;
+            }
+
+            .result-value {
+                font-size: 2.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="calculator-wrapper">
+            <div class="calculator-card">
+                <div class="calculator-header">
+                    <div class="header-icon">&#9876;</div>
+                    <h1>Arena Points Calculator</h1>
+                    <p class="subtitle">Burning Crusade Classic</p>
+                </div>
+
+                <form id="calcForm" onsubmit="return calculate(event)">
+                    <div class="form-section">
+                        <label class="section-label">Arena Bracket</label>
+                        <div class="bracket-grid">
+                            <label class="bracket-option" id="opt-2">
+                                <input type="radio" name="bracket" value="2" data-modifier="0.76" data-label="2v2" />
+                                <div class="bracket-content">
+                                    <span class="bracket-name">2v2</span>
+                                    <span class="bracket-modifier">&times;0.76</span>
+                                </div>
+                            </label>
+                            <label class="bracket-option" id="opt-3">
+                                <input type="radio" name="bracket" value="3" data-modifier="0.88" data-label="3v3" />
+                                <div class="bracket-content">
+                                    <span class="bracket-name">3v3</span>
+                                    <span class="bracket-modifier">&times;0.88</span>
+                                </div>
+                            </label>
+                            <label class="bracket-option selected" id="opt-5">
+                                <input type="radio" name="bracket" value="5" data-modifier="1.00" data-label="5v5" checked />
+                                <div class="bracket-content">
+                                    <span class="bracket-name">5v5</span>
+                                    <span class="bracket-modifier">&times;1.00</span>
+                                </div>
+                            </label>
+                        </div>
+                        <span id="bracketError" class="field-error"></span>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="section-label" for="rating">Team Rating</label>
+                        <div class="rating-input-wrapper">
+                            <input type="number"
+                                   id="rating"
+                                   name="rating"
+                                   class="rating-input"
+                                   min="0"
+                                   max="9999"
+                                   value="1500"
+                                   placeholder="e.g. 1500" />
+                        </div>
+                        <span id="ratingError" class="field-error"></span>
+                    </div>
+
+                    <button type="submit" class="calculate-btn">Calculate Points</button>
+                </form>
+
+                <div id="resultPanel" class="result-panel hidden">
+                    <div class="result-label">Weekly Arena Points</div>
+                    <div id="resultValue" class="result-value"></div>
+                    <div id="resultDetails" class="result-details"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div>Arena Points Calculator &mdash; Burning Crusade Classic</div>
+    </footer>
+
+    <script>
+        document.querySelectorAll('.bracket-option input[type="radio"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                document.querySelectorAll('.bracket-option').forEach(function (opt) {
+                    opt.classList.remove('selected');
+                });
+                radio.closest('.bracket-option').classList.add('selected');
+            });
+        });
+
+        function calculate(e) {
+            e.preventDefault();
+
+            var bracketError = document.getElementById('bracketError');
+            var ratingError = document.getElementById('ratingError');
+            var resultPanel = document.getElementById('resultPanel');
+            bracketError.textContent = '';
+            ratingError.textContent = '';
+
+            var selected = document.querySelector('input[name="bracket"]:checked');
+            if (!selected) {
+                bracketError.textContent = 'Please select a valid bracket.';
+                resultPanel.classList.add('hidden');
+                return false;
+            }
+
+            var rating = parseInt(document.getElementById('rating').value, 10);
+            if (isNaN(rating) || rating < 0 || rating > 9999) {
+                ratingError.textContent = 'Rating must be between 0 and 9999.';
+                resultPanel.classList.add('hidden');
+                return false;
+            }
+
+            var modifier = parseFloat(selected.getAttribute('data-modifier'));
+            var label = selected.getAttribute('data-label');
+
+            var points = Math.floor(
+                (((1651.94 - 475) / (1 + 2500000 * Math.pow(2.71828, -0.009 * rating)) + 475) * 1.5) * modifier
+            );
+
+            document.getElementById('resultValue').textContent = points.toLocaleString();
+            document.getElementById('resultDetails').innerHTML =
+                '<span>' + label + ' bracket</span>' +
+                '<span class="detail-separator">&middot;</span>' +
+                '<span>' + rating + ' rating</span>' +
+                '<span class="detail-separator">&middot;</span>' +
+                '<span>&times;' + modifier.toFixed(2) + ' modifier</span>';
+
+            resultPanel.classList.remove('hidden');
+            resultPanel.style.animation = 'none';
+            resultPanel.offsetHeight; // trigger reflow
+            resultPanel.style.animation = '';
+
+            return false;
+        }
+    </script>
+</body>
+</html>
